@@ -31,7 +31,7 @@
       <td colspan="2" style="font-weight:bold;">Available Servlets:</td>
     </tr>
     <tr>
-      <td><a href='/hello'>Hello App Engine</a></td>
+      <td><a href='/file'>Hello App Engine</a></td>
     </tr>
   </table>
 

@@ -14,6 +14,8 @@
 
 package com.example.appengine.java8;
 
+import com.google.appengine.tools.cloudstorage.GcsServiceFactory;
+import com.google.appengine.tools.cloudstorage.RetryParams;
 import com.google.common.collect.ImmutableMap;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -25,25 +27,40 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 // With @WebServlet annotation the webapp/WEB-INF/web.xml is no longer required.
-@WebServlet(name = "HelloAppEngine", value = "/hello")
+@WebServlet(name = "HelloAppEngine", value = "/file")
 public class HelloAppEngine extends HttpServlet {
 
-  private Gson gson = new GsonBuilder().setPrettyPrinting().create();
+  private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+  private final GcsUtf8Reader gcsUtf8Reader;
+
+  //No-arg constructor is used in prod
+  public HelloAppEngine() {
+    this(new GcsUtf8Reader(GcsServiceFactory.createGcsService(new RetryParams.Builder()
+        .initialRetryDelayMillis(10)
+        .retryMaxAttempts(10)
+        .totalRetryPeriodMillis(15000)
+        .build())));
+  }
+
+  public HelloAppEngine(GcsUtf8Reader gcsUtf8Reader) {
+    this.gcsUtf8Reader = gcsUtf8Reader;
+  }
 
   @Override
   public void doGet(HttpServletRequest request, HttpServletResponse response) throws IOException {
-    response.setContentType("application/json");
+    try {
 
-    String query = request.getQueryString();
+      response.setContentType("application/json");
 
-    if (query == null) {
-      respond(response, ImmutableMap.of(
-          "error", "Please set a query in the URL.",
-          "result", "FAILURE"));
-    } else {
-      respond(response, ImmutableMap.of(
-          "query", query,
-          "result", "SUCCESS"));
+      String fileName = request.getQueryString();
+
+      String content = gcsUtf8Reader.readUtf8FromBucket("jonathan-bucket", fileName);
+
+      System.out.println(content);
+      respond(response, ImmutableMap.of("content", content));
+    } catch (Exception e) {
+      e.printStackTrace();
+      respond(response, ImmutableMap.of("exception", e.getMessage()));
     }
   }
 

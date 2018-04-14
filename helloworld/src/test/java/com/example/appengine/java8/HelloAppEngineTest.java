@@ -15,6 +15,8 @@
 package com.example.appengine.java8;
 
 import static com.google.common.truth.Truth.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import com.google.appengine.tools.development.testing.LocalServiceTestHelper;
@@ -51,7 +53,9 @@ public class HelloAppEngineTest {
     responseWriter = new StringWriter();
     when(mockResponse.getWriter()).thenReturn(new PrintWriter(responseWriter));
 
-    servlet = new HelloAppEngine();
+    GcsUtf8Reader gcsUtfReader = mock(GcsUtf8Reader.class);
+    when(gcsUtfReader.readUtf8FromBucket(any(), any())).thenReturn("CONTENT");
+    servlet = new HelloAppEngine(gcsUtfReader);
   }
 
   @After
@@ -61,8 +65,8 @@ public class HelloAppEngineTest {
 
   @Test
   public void doGetWritesResponse() throws Exception {
-    when(mockRequest.getRequestURI()).thenReturn("some-host/hello");
-    when(mockRequest.getQueryString()).thenReturn("yo");
+    when(mockRequest.getRequestURI()).thenReturn("some-host/file");
+    when(mockRequest.getQueryString()).thenReturn("FILENAME");
 
     servlet.doGet(mockRequest, mockResponse);
 
