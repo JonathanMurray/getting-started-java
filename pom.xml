@@ -28,7 +28,7 @@ limitations under the License.
     </parent>
 
     <modules>
-        <module>appengine-standard-java8/helloworld</module>
+        <module>helloworld</module>
     </modules>
 
     <reporting>
